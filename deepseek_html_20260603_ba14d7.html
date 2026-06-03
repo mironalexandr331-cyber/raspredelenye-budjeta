@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор распределения бюджета</title>
+
+    <!-- Google Fonts: Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-start: #0f0c29;
+            --bg-mid: #302b63;
+            --bg-end: #24243e;
+            --accent: #a78bfa;
+            --accent-bright: #c4b5fd;
+            --accent-dim: #7c3aed;
+            --glass-bg: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-bg-hover: rgba(255, 255, 255, 0.07);
+            --input-bg: rgba(0, 0, 0, 0.35);
+            --input-border: rgba(255, 255, 255, 0.12);
+            --input-focus-border: #a78bfa;
+            --text-primary: #e2e0f0;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --danger: #f87171;
+            --warning: #facc15;
+            --success: #4ade80;
+            --btn-bg: rgba(139, 120, 210, 0.25);
+            --btn-hover: rgba(139, 120, 210, 0.45);
+            --btn-danger-bg: rgba(248, 113, 113, 0.2);
+            --btn-danger-hover: rgba(248, 113, 113, 0.4);
+            /* Увеличенные радиусы для сглаживания */
+            --radius-lg: 28px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --shadow-card: 0 10px 45px rgba(0, 0, 0, 0.5);
+            /* Усиленное мягкое свечение */
+            --shadow-glow: 0 0 35px rgba(167, 139, 250, 0.18);
+            --shadow-glow-hover: 0 0 45px rgba(167, 139, 250, 0.28);
+            --transition-fast: 0.2s ease;
+            --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(160deg, var(--bg-start) 0%, var(--bg-mid) 50%, var(--bg-end) 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 30px 16px 60px;
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Декоративные элементы с более мягким свечением */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -160px;
+            right: -100px;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, rgba(139, 120, 210, 0.18) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(10px);
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -180px;
+            left: -120px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.14) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(10px);
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 880px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* ========== Стеклянная карточка ========== */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 28px 30px 24px;
+            box-shadow: var(--shadow-card), var(--shadow-glow);
+            transition: border-color var(--transition-smooth), box-shadow var(--transition-smooth);
+        }
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.14);
+            box-shadow: var(--shadow-card), var(--shadow-glow-hover);
+        }
+
+        .calculator-title {
+            font-size: 1.55rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            margin-bottom: 22px;
+            text-align: center;
+            background: linear-gradient(135deg, #e2e0f0 0%, #c4b5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ========== Верхние поля ========== */
+        .top-fields {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        .top-field {
+            flex: 1 1 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .top-field label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+        }
+        .top-field .input-wrapper {
+            position: relative;
+        }
+        .top-field input {
+            width: 100%;
+            padding: 13px 16px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            background: var(--input-bg);
+            border: 1.5px solid var(--input-border);
+            border-radius: var(--radius-sm);
+            outline: none;
+            transition: all var(--transition-fast), box-shadow var(--transition-smooth);
+            letter-spacing: 0.01em;
+        }
+        .top-field input:focus {
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.12), 0 0 18px rgba(167, 139, 250, 0.25);
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .top-field input::placeholder {
+            color: rgba(255, 255, 255, 0.25);
+        }
+        .top-field .field-suffix {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            pointer-events: none;
+            letter-spacing: 0.03em;
+        }
+
+        /* ========== Таблица источников ========== */
+        .sources-section {
+            margin-bottom: 16px;
+        }
+        .sources-header {
+            display: grid;
+            grid-template-columns: 1.8fr 1fr 1.3fr 1.3fr 0.4fr;
+            gap: 10px;
+            padding: 0 4px 10px;
+            margin-bottom: 4px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .sources-header span {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-muted);
+        }
+        .sources-header span:last-child {
+            text-align: center;
+        }
+
+        .sources-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-height: 60px;
+        }
+
+        .source-row {
+            display: grid;
+            grid-template-columns: 1.8fr 1fr 1.3fr 1.3fr 0.4fr;
+            gap: 10px;
+            align-items: center;
+            padding: 6px 4px;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-smooth), box-shadow var(--transition-smooth);
+            animation: fadeSlide 0.35s ease-out;
+            border: 1px solid transparent;
+        }
+        .source-row:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 20px rgba(167, 139, 250, 0.08);
+        }
+        @keyframes fadeSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .source-row.removing {
+            animation: fadeSlideOut 0.25s ease-in forwards;
+        }
+        @keyframes fadeSlideOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+        }
+
+        .source-row input {
+            width: 100%;
+            padding: 10px 12px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            background: var(--input-bg);
+            border: 1.5px solid var(--input-border);
+            border-radius: 10px;
+            outline: none;
+            transition: all var(--transition-fast), box-shadow var(--transition-smooth);
+            letter-spacing: 0.01em;
+        }
+        .source-row input:focus {
+            border-color: var(--input-focus-border);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1), 0 0 14px rgba(167, 139, 250, 0.22);
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .source-row input::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+        }
+        .source-row input.name-input {
+            font-weight: 400;
+            letter-spacing: 0.02em;
+        }
+
+        .btn-delete {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            margin: 0 auto;
+            background: var(--btn-danger-bg);
+            border: 1px solid rgba(248, 113, 113, 0.2);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all var(--transition-fast), box-shadow var(--transition-smooth);
+            color: #fca5a5;
+            font-size: 1rem;
+            line-height: 1;
+            user-select: none;
+            flex-shrink: 0;
+        }
+        .btn-delete:hover:not(:disabled) {
+            background: var(--btn-danger-hover);
+            border-color: rgba(248, 113, 113, 0.5);
+            color: #fecaca;
+            transform: scale(1.08);
+            box-shadow: 0 0 18px rgba(248, 113, 113, 0.4);
+        }
+        .btn-delete:active:not(:disabled) {
+            transform: scale(0.94);
+            transition: transform 0.08s ease;
+        }
+        .btn-delete:disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+            filter: grayscale(0.5);
+        }
+        .btn-delete svg {
+            width: 16px;
+            height: 16px;
+            pointer-events: none;
+        }
+
+        /* ========== Кнопки действий ========== */
+        .actions-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .btn {
+            padding: 11px 22px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            border-radius: 30px;
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            transition: all var(--transition-fast), box-shadow var(--transition-smooth);
+            text-transform: uppercase;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .btn-add {
+            background: var(--btn-bg);
+            border-color: rgba(167, 139, 250, 0.35);
+            color: #d4ccf8;
+        }
+        .btn-add:hover {
+            background: var(--btn-hover);
+            border-color: rgba(167, 139, 250, 0.6);
+            box-shadow: 0 0 22px rgba(167, 139, 250, 0.28);
+            transform: translateY(-1px);
+        }
+        .btn-reset {
+            background: transparent;
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #b0adc5;
+        }
+        .btn-reset:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: #e2e0f0;
+            box-shadow: 0 0 18px rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+        .btn:active {
+            transform: scale(0.96);
+            transition: transform 0.08s ease;
+        }
+
+        /* ========== Сводка ========== */
+        .summary-panel {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .summary-block {
+            text-align: center;
+            padding: 12px 8px;
+            border-radius: var(--radius-sm);
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all var(--transition-smooth), box-shadow var(--transition-smooth);
+        }
+        .summary-block:hover {
+            background: rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(167, 139, 250, 0.15);
+            transform: translateY(-2px);
+        }
+        .summary-block .sb-label {
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+        .summary-block .sb-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: 0.02em;
+        }
+        .summary-block .sb-sub {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            letter-spacing: 0.02em;
+        }
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            font-size: 0.78rem;
+            margin-top: 2px;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 0 8px currentColor;
+        }
+        .status-dot.green {
+            background: var(--success);
+            color: var(--success);
+            box-shadow: 0 0 12px rgba(74, 222, 128, 0.7);
+        }
+        .status-dot.yellow {
+            background: var(--warning);
+            color: var(--warning);
+            box-shadow: 0 0 12px rgba(250, 204, 21, 0.7);
+        }
+        .status-dot.red {
+            background: var(--danger);
+            color: var(--danger);
+            box-shadow: 0 0 12px rgba(248, 113, 113, 0.7);
+        }
+        .status-text {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 3px;
+            letter-spacing: 0.02em;
+        }
+
+        /* ========== Инструкция ========== */
+        .instructions-card {
+            padding: 20px 24px;
+        }
+        .instructions-card h3 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+        .instructions-card ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+        .instructions-card li {
+            font-size: 0.8rem;
+            color: #b0adc5;
+            padding-left: 18px;
+            position: relative;
+            line-height: 1.5;
+            letter-spacing: 0.02em;
+        }
+        .instructions-card li::before {
+            content: '›';
+            position: absolute;
+            left: 2px;
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 1.1rem;
+            line-height: 1;
+            top: 1px;
+        }
+
+        /* ========== Адаптивность ========== */
+        @media (max-width: 768px) {
+            body {
+                padding: 16px 10px 40px;
+            }
+            .glass-card {
+                padding: 20px 16px 18px;
+            }
+            .calculator-title {
+                font-size: 1.3rem;
+                margin-bottom: 16px;
+            }
+            .top-fields {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .top-field {
+                flex: 1 1 auto;
+            }
+            .sources-header {
+                display: none;
+            }
+            .source-row {
+                grid-template-columns: 1fr;
+                gap: 8px;
+                padding: 10px;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: var(--radius-sm);
+                background: rgba(0, 0, 0, 0.15);
+                position: relative;
+            }
+            .source-row .btn-delete {
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+            }
+            .source-row input {
+                font-size: 0.85rem;
+                padding: 10px;
+            }
+            .summary-panel {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .summary-block .sb-value {
+                font-size: 0.95rem;
+            }
+            .actions-row {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .btn {
+                width: 100%;
+                text-align: center;
+                padding: 12px 16px;
+            }
+        }
+        @media (max-width: 400px) {
+            .summary-panel {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .summary-block {
+                padding: 8px 4px;
+            }
+            .summary-block .sb-value {
+                font-size: 0.85rem;
+            }
+            .summary-block .sb-label {
+                font-size: 0.62rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <!-- Основная карточка калькулятора -->
+        <div class="glass-card" id="calculatorCard">
+            <h1 class="calculator-title">Распределение бюджета</h1>
+
+            <!-- Общий бюджет и личный процент -->
+            <div class="top-fields">
+                <div class="top-field">
+                    <label for="totalBudget">Общий бюджет</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="totalBudget" value="0" min="0" step="1" placeholder="0">
+                        <span class="field-suffix">₽</span>
+                    </div>
+                </div>
+                <div class="top-field">
+                    <label for="personalPercent">Личный процент (комиссия)</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="personalPercent" value="0" min="0" max="100" step="0.1" placeholder="0">
+                        <span class="field-suffix">%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Список источников -->
+            <div class="sources-section">
+                <div class="sources-header">
+                    <span>Название</span>
+                    <span>Доля, %</span>
+                    <span>Без вычета, ₽</span>
+                    <span>С вычетом, ₽</span>
+                    <span></span>
+                </div>
+                <div class="sources-list" id="sourcesList">
+                    <!-- Источники генерируются динамически -->
+                </div>
+            </div>
+
+            <!-- Кнопки -->
+            <div class="actions-row">
+                <button class="btn btn-add" id="btnAddSource" title="Добавить новый источник">+ Добавить источник</button>
+                <button class="btn btn-reset" id="btnReset" title="Сбросить все значения">↺ Сбросить всё</button>
+            </div>
+
+            <!-- Сводка -->
+            <div class="summary-panel" id="summaryPanel">
+                <div class="summary-block" id="sbSources">
+                    <div class="sb-label">Проценты источников</div>
+                    <div class="sb-value" id="sbSourcesPercent">0.0%</div>
+                    <div class="status-indicator" id="sbSourcesStatus">
+                        <span class="status-dot yellow"></span>
+                        <span>—</span>
+                    </div>
+                    <div class="status-text" id="sbSourcesDiff"></div>
+                </div>
+                <div class="summary-block" id="sbPersonal">
+                    <div class="sb-label">Ваш личный %</div>
+                    <div class="sb-value" id="sbPersonalPercent">0.0%</div>
+                    <div class="sb-sub" id="sbPersonalAmount">0 ₽</div>
+                </div>
+                <div class="summary-block" id="sbWithout">
+                    <div class="sb-label">Без вычета</div>
+                    <div class="sb-value" id="sbWithoutTotal">0 ₽</div>
+                    <div class="sb-sub">общая сумма</div>
+                </div>
+                <div class="summary-block" id="sbWith">
+                    <div class="sb-label">С вычетом</div>
+                    <div class="sb-value" id="sbWithTotal">0 ₽</div>
+                    <div class="sb-sub">к распределению</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Инструкция -->
+        <div class="glass-card instructions-card">
+            <h3>Как пользоваться</h3>
+            <ul>
+                <li>Укажите общий бюджет и личный процент комиссии — он вычитается из бюджета до распределения.</li>
+                <li>Добавляйте источники и заполняйте любое из трёх полей: процент, сумму без вычета или сумму с вычетом — остальные пересчитаются автоматически.</li>
+                <li>Приоритет сохраняется за последним изменённым полем. При изменении бюджета или личного процента все строки пересчитываются с учётом этого приоритета.</li>
+                <li>Сумма процентов источников должна равняться 100% — индикатор подскажет, если есть нехватка или перебор.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ==================== DOM-элементы ====================
+            const totalBudgetInput = document.getElementById('totalBudget');
+            const personalPercentInput = document.getElementById('personalPercent');
+            const sourcesListEl = document.getElementById('sourcesList');
+            const btnAddSource = document.getElementById('btnAddSource');
+            const btnReset = document.getElementById('btnReset');
+
+            // Элементы сводки
+            const sbSourcesPercent = document.getElementById('sbSourcesPercent');
+            const sbSourcesStatus = document.getElementById('sbSourcesStatus');
+            const sbSourcesDiff = document.getElementById('sbSourcesDiff');
+            const sbPersonalPercent = document.getElementById('sbPersonalPercent');
+            const sbPersonalAmount = document.getElementById('sbPersonalAmount');
+            const sbWithoutTotal = document.getElementById('sbWithoutTotal');
+            const sbWithTotal = document.getElementById('sbWithTotal');
+
+            // ==================== Состояние ====================
+            let state = {
+                budget: 0,
+                personalPercent: 0,
+                sources: [],
+                nextId: 1,
+            };
+
+            // ==================== Вспомогательные функции ====================
+
+            /** Форматирование числа с разделителями тысяч (пробел) */
+            function formatNumber(num) {
+                const rounded = Math.round(num);
+                if (rounded === 0 && num !== 0 && num > -1 && num < 1 && num !== 0) return '0';
+                const str = Math.abs(rounded).toString();
+                const formatted = str.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+                return rounded < 0 ? '−' + formatted : formatted;
+            }
+
+            /** Форматирование числа с разделителями для отображения в инпуте суммы */
+            function formatNumberForInput(num) {
+                const rounded = Math.round(num);
+                if (rounded === 0) return '0';
+                return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            }
+
+            /** Парсинг значения из текстового поля (удаляет пробелы, обрабатывает пустоту) */
+            function parseNumericValue(rawValue) {
+                if (rawValue === null || rawValue === undefined) return null;
+                const cleaned = String(rawValue).replace(/\s/g, '').replace(',', '.').trim();
+                if (cleaned === '' || cleaned === '-') return null;
+                const parsed = parseFloat(cleaned);
+                return isNaN(parsed) ? null : parsed;
+            }
+
+            /** Безопасное получение числа из поля ввода (null если пусто) */
+            function getInputNumeric(inputEl) {
+                return parseNumericValue(inputEl.value);
+            }
+
+            /** Установка значения в инпут суммы с форматированием */
+            function setAmountInput(inputEl, value) {
+                const num = Math.round(value);
+                if (num === 0 && value === 0) {
+                    inputEl.value = '0';
+                } else if (num === 0) {
+                    inputEl.value = '';
+                } else {
+                    inputEl.value = formatNumberForInput(num);
+                }
+                // Сохраняем сырое значение в data-атрибуте
+                inputEl.dataset.rawValue = String(Math.round(value));
+            }
+
+            /** Получение сырого значения из инпута суммы */
+            function getAmountInputRaw(inputEl) {
+                const raw = inputEl.dataset.rawValue;
+                if (raw === undefined || raw === '' || raw === null) return null;
+                const num = parseInt(raw, 10);
+                return isNaN(num) ? null : num;
+            }
+
+            /** Форматирование процента с одним знаком после запятой */
+            function formatPercent(value) {
+                const num = parseFloat(value);
+                if (isNaN(num)) return '0.0%';
+                return num.toFixed(1) + '%';
+            }
+
+            // ==================== Расчётные функции ====================
+
+            /**
+             * Пересчёт источника на основе его приоритетного поля.
+             * Возвращает обновлённые поля { percent, withoutDeduction, withDeduction }.
+             */
+            function recalculateSourceFields(source, budget, personalPercent) {
+                const P = Math.min(100, Math.max(0, personalPercent));
+                const factor = (100 - P) / 100; // коэффициент вычета
+                let percent = source.percent;
+                let withoutDeduction = source.withoutDeduction;
+                let withDeduction = source.withDeduction;
+
+                const priority = source.priority || 'percent';
+
+                if (budget <= 0) {
+                    return { percent: priority === 'percent' ? (percent || 0) : 0, withoutDeduction: 0,
+                        withDeduction: 0 };
+                }
+
+                switch (priority) {
+                    case 'percent': {
+                        const p = Math.max(0, percent || 0);
+                        withoutDeduction = Math.round(budget * p / 100);
+                        withDeduction = Math.round(withoutDeduction * factor);
+                        return { percent: p, withoutDeduction, withDeduction };
+                    }
+                    case 'withoutDeduction': {
+                        const wd = Math.max(0, withoutDeduction || 0);
+                        percent = (wd / budget) * 100;
+                        withDeduction = Math.round(wd * factor);
+                        return { percent, withoutDeduction: wd, withDeduction };
+                    }
+                    case 'withDeduction': {
+                        const wc = Math.max(0, withDeduction || 0);
+                        if (factor <= 0) {
+                            withoutDeduction = (withoutDeduction > 0) ? withoutDeduction : 0;
+                            percent = budget > 0 ? (withoutDeduction / budget) * 100 : 0;
+                            return { percent, withoutDeduction, withDeduction: 0 };
+                        }
+                        withoutDeduction = Math.round(wc / factor);
+                        percent = (withoutDeduction / budget) * 100;
+                        return { percent, withoutDeduction, withDeduction: wc };
+                    }
+                    default: {
+                        return { percent: percent || 0, withoutDeduction: withoutDeduction || 0,
+                            withDeduction: withDeduction || 0 };
+                    }
+                }
+            }
+
+            /** Пересчитать все источники и обновить их в состоянии */
+            function recalculateAllSources() {
+                const budget = state.budget;
+                const personalPercent = state.personalPercent;
+                for (const source of state.sources) {
+                    const recalc = recalculateSourceFields(source, budget, personalPercent);
+                    source.percent = recalc.percent;
+                    source.withoutDeduction = recalc.withoutDeduction;
+                    source.withDeduction = recalc.withDeduction;
+                }
+            }
+
+            // ==================== Рендеринг ====================
+
+            /** Создать DOM-элемент строки источника */
+            function createSourceRowDOM(source, index, totalSources) {
+                const row = document.createElement('div');
+                row.className = 'source-row';
+                row.dataset.index = String(index);
+
+                // Название
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.className = 'name-input';
+                nameInput.placeholder = 'Название источника';
+                nameInput.value = source.name || '';
+                nameInput.maxLength = 80;
+                nameInput.addEventListener('input', function() {
+                    state.sources[index].name = this.value;
+                });
+
+                // Процент
+                const percentInput = document.createElement('input');
+                percentInput.type = 'number';
+                percentInput.className = 'percent-input';
+                percentInput.placeholder = '0';
+                percentInput.min = '0';
+                percentInput.step = '0.1';
+                percentInput.value = source.percent > 0 ? source.percent.toFixed(1) : '';
+                percentInput.addEventListener('input', function() {
+                    onSourceFieldInput(index, 'percent', this);
+                });
+                percentInput.addEventListener('focus', function() {
+                    if (this.value === '0' || this.value === '0.0') this.value = '';
+                });
+                percentInput.addEventListener('blur', function() {
+                    onSourceFieldBlur(index, 'percent', this);
+                });
+
+                // Сумма без вычета
+                const withoutInput = document.createElement('input');
+                withoutInput.type = 'text';
+                withoutInput.className = 'without-input';
+                withoutInput.placeholder = '0';
+                withoutInput.inputMode = 'numeric';
+                withoutInput.pattern = '[0-9\\s]*';
+                setAmountInput(withoutInput, source.withoutDeduction);
+                withoutInput.addEventListener('input', function() {
+                    onSourceFieldInput(index, 'withoutDeduction', this);
+                });
+                withoutInput.addEventListener('focus', function() {
+                    onAmountFocus(this);
+                });
+                withoutInput.addEventListener('blur', function() {
+                    onAmountBlur(this, index, 'withoutDeduction');
+                });
+
+                // Сумма с вычетом
+                const withInput = document.createElement('input');
+                withInput.type = 'text';
+                withInput.className = 'with-input';
+                withInput.placeholder = '0';
+                withInput.inputMode = 'numeric';
+                withInput.pattern = '[0-9\\s]*';
+                setAmountInput(withInput, source.withDeduction);
+                withInput.addEventListener('input', function() {
+                    onSourceFieldInput(index, 'withDeduction', this);
+                });
+                withInput.addEventListener('focus', function() {
+                    onAmountFocus(this);
+                });
+                withInput.addEventListener('blur', function() {
+                    onAmountBlur(this, index, 'withDeduction');
+                });
+
+                // Кнопка удаления
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn-delete';
+                deleteBtn.title = 'Удалить источник';
+                deleteBtn.disabled = totalSources <= 1;
+                deleteBtn.innerHTML =
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>';
+                deleteBtn.addEventListener('click', function() {
+                    removeSource(index);
+                });
+
+                row.appendChild(nameInput);
+                row.appendChild(percentInput);
+                row.appendChild(withoutInput);
+                row.appendChild(withInput);
+                row.appendChild(deleteBtn);
+
+                return row;
+            }
+
+            /** Обработчик фокуса на поле суммы — показываем сырое число */
+            function onAmountFocus(inputEl) {
+                const raw = inputEl.dataset.rawValue;
+                if (raw !== undefined && raw !== null && raw !== '') {
+                    inputEl.value = raw;
+                } else {
+                    inputEl.value = '';
+                }
+                inputEl.select();
+            }
+
+            /** Обработчик потери фокуса на поле суммы — форматируем */
+            function onAmountBlur(inputEl, index, fieldType) {
+                const raw = inputEl.dataset.rawValue;
+                const num = (raw !== undefined && raw !== null && raw !== '') ? parseInt(raw, 10) : NaN;
+                if (!isNaN(num) && num >= 0) {
+                    setAmountInput(inputEl, num);
+                } else {
+                    const source = state.sources[index];
+                    if (source && fieldType === 'withoutDeduction') {
+                        setAmountInput(inputEl, source.withoutDeduction || 0);
+                    } else if (source && fieldType === 'withDeduction') {
+                        setAmountInput(inputEl, source.withDeduction || 0);
+                    } else {
+                        inputEl.value = '0';
+                        inputEl.dataset.rawValue = '0';
+                    }
+                }
+            }
+
+            /** Обработчик ввода в полях источника */
+            function onSourceFieldInput(index, fieldType, inputEl) {
+                if (!state.sources[index]) return;
+
+                let rawValue;
+                if (fieldType === 'percent') {
+                    rawValue = getInputNumeric(inputEl);
+                } else {
+                    const cleaned = String(inputEl.value).replace(/\s/g, '').replace(/[^\d]/g, '');
+                    if (cleaned === '') {
+                        rawValue = null;
+                        inputEl.dataset.rawValue = '';
+                    } else {
+                        rawValue = parseInt(cleaned, 10);
+                        if (isNaN(rawValue) || rawValue < 0) rawValue = null;
+                        inputEl.dataset.rawValue = rawValue !== null ? String(rawValue) : '';
+                    }
+                }
+
+                if (rawValue === null) {
+                    state.sources[index].priority = fieldType;
+                    if (fieldType === 'percent') {
+                        state.sources[index].percent = 0;
+                    } else if (fieldType === 'withoutDeduction') {
+                        state.sources[index].withoutDeduction = 0;
+                    } else {
+                        state.sources[index].withDeduction = 0;
+                    }
+                    updateSummary();
+                    updateDeleteButtons();
+                    return;
+                }
+
+                state.sources[index].priority = fieldType;
+
+                if (fieldType === 'percent') {
+                    state.sources[index].percent = Math.max(0, rawValue);
+                } else if (fieldType === 'withoutDeduction') {
+                    state.sources[index].withoutDeduction = Math.max(0, Math.round(rawValue));
+                } else {
+                    state.sources[index].withDeduction = Math.max(0, Math.round(rawValue));
+                }
+
+                const recalc = recalculateSourceFields(
+                    state.sources[index],
+                    state.budget,
+                    state.personalPercent
+                );
+                state.sources[index].percent = recalc.percent;
+                state.sources[index].withoutDeduction = recalc.withoutDeduction;
+                state.sources[index].withDeduction = recalc.withDeduction;
+
+                syncSourceRowDOM(index);
+                updateSummary();
+                updateDeleteButtons();
+            }
+
+            /** Обработчик blur для поля процента */
+            function onSourceFieldBlur(index, fieldType, inputEl) {
+                if (!state.sources[index]) return;
+                if (fieldType === 'percent') {
+                    const val = state.sources[index].percent;
+                    if (val > 0) {
+                        inputEl.value = val.toFixed(1);
+                    } else {
+                        inputEl.value = '';
+                    }
+                }
+            }
+
+            /** Синхронизация DOM-строки с состоянием */
+            function syncSourceRowDOM(index) {
+                const rows = sourcesListEl.querySelectorAll('.source-row[data-index]');
+                let targetRow = null;
+                for (const row of rows) {
+                    if (parseInt(row.dataset.index) === index) {
+                        targetRow = row;
+                        break;
+                    }
+                }
+                if (!targetRow) return;
+
+                const source = state.sources[index];
+                if (!source) return;
+
+                const inputs = targetRow.querySelectorAll('input');
+                if (inputs.length >= 4) {
+                    if (document.activeElement !== inputs[1]) {
+                        inputs[1].value = source.percent > 0 ? source.percent.toFixed(1) : '';
+                    }
+                    if (document.activeElement !== inputs[2]) {
+                        setAmountInput(inputs[2], source.withoutDeduction);
+                    }
+                    if (document.activeElement !== inputs[3]) {
+                        setAmountInput(inputs[3], source.withDeduction);
+                    }
+                }
+            }
+
+            /** Полный рендеринг списка источников */
+            function renderAllSources() {
+                sourcesListEl.innerHTML = '';
+                const totalSources = state.sources.length;
+                state.sources.forEach((source, index) => {
+                    const rowDOM = createSourceRowDOM(source, index, totalSources);
+                    sourcesListEl.appendChild(rowDOM);
+                });
+                updateDeleteButtons();
+                updateSummary();
+            }
+
+            /** Обновление состояния кнопок удаления */
+            function updateDeleteButtons() {
+                const rows = sourcesListEl.querySelectorAll('.source-row');
+                const totalSources = state.sources.length;
+                rows.forEach((row) => {
+                    const btn = row.querySelector('.btn-delete');
+                    if (btn) {
+                        btn.disabled = totalSources <= 1;
+                    }
+                });
+            }
+
+            /** Обновление панели сводки */
+            function updateSummary() {
+                const budget = state.budget;
+                const personalPercent = state.personalPercent;
+                const personalAmount = Math.round(budget * personalPercent / 100);
+
+                let totalPercent = 0;
+                let totalWithout = 0;
+                let totalWith = 0;
+
+                for (const source of state.sources) {
+                    totalPercent += source.percent || 0;
+                    totalWithout += source.withoutDeduction || 0;
+                    totalWith += source.withDeduction || 0;
+                }
+
+                sbSourcesPercent.textContent = formatPercent(totalPercent);
+
+                const diff = totalPercent - 100;
+                const statusDot = sbSourcesStatus.querySelector('.status-dot');
+                const statusSpan = sbSourcesStatus.querySelector('span:last-child');
+
+                statusDot.classList.remove('green', 'yellow', 'red');
+
+                if (Math.abs(diff) < 0.05) {
+                    statusDot.classList.add('green');
+                    if (statusSpan) statusSpan.textContent = '100%';
+                    sbSourcesDiff.textContent = 'Идеально ✓';
+                    sbSourcesDiff.style.color = '#4ade80';
+                } else if (diff < 0) {
+                    statusDot.classList.add('yellow');
+                    const missing = Math.abs(diff);
+                    const missingAmount = Math.round(budget * missing / 100);
+                    if (statusSpan) statusSpan.textContent = formatPercent(totalPercent);
+                    sbSourcesDiff.textContent = 'Не хватает ' + formatPercent(missing) + ' (' + formatNumber(
+                        missingAmount) + ' ₽)';
+                    sbSourcesDiff.style.color = '#facc15';
+                } else {
+                    statusDot.classList.add('red');
+                    const excess = diff;
+                    const excessAmount = Math.round(budget * excess / 100);
+                    if (statusSpan) statusSpan.textContent = formatPercent(totalPercent);
+                    sbSourcesDiff.textContent = 'Превышение на ' + formatPercent(excess) + ' (' + formatNumber(
+                        excessAmount) + ' ₽)';
+                    sbSourcesDiff.style.color = '#f87171';
+                }
+
+                sbPersonalPercent.textContent = formatPercent(personalPercent);
+                sbPersonalAmount.textContent = formatNumber(personalAmount) + ' ₽';
+                sbWithoutTotal.textContent = formatNumber(totalWithout) + ' ₽';
+                sbWithTotal.textContent = formatNumber(totalWith) + ' ₽';
+            }
+
+            // ==================== Действия ====================
+
+            function addSource(focusName = true) {
+                const newSource = {
+                    id: state.nextId++,
+                    name: '',
+                    percent: 0,
+                    withoutDeduction: 0,
+                    withDeduction: 0,
+                    priority: 'percent',
+                };
+                state.sources.push(newSource);
+                const index = state.sources.length - 1;
+                const totalSources = state.sources.length;
+                const rowDOM = createSourceRowDOM(newSource, index, totalSources);
+                sourcesListEl.appendChild(rowDOM);
+                updateDeleteButtons();
+                updateSummary();
+                if (focusName) {
+                    setTimeout(() => {
+                        const nameInput = rowDOM.querySelector('.name-input');
+                        if (nameInput) nameInput.focus();
+                    }, 100);
+                }
+                rowDOM.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            function removeSource(index) {
+                if (state.sources.length <= 1) return;
+                const rowToRemove = sourcesListEl.querySelector(`.source-row[data-index="${index}"]`);
+                if (rowToRemove) {
+                    rowToRemove.classList.add('removing');
+                    rowToRemove.addEventListener('animationend', function() {
+                        state.sources.splice(index, 1);
+                        renderAllSources();
+                    }, { once: true });
+                } else {
+                    state.sources.splice(index, 1);
+                    renderAllSources();
+                }
+            }
+
+            function resetAll() {
+                state.budget = 0;
+                state.personalPercent = 0;
+                state.sources = [{
+                    id: state.nextId++,
+                    name: '',
+                    percent: 0,
+                    withoutDeduction: 0,
+                    withDeduction: 0,
+                    priority: 'percent',
+                }];
+                totalBudgetInput.value = '0';
+                personalPercentInput.value = '0';
+                renderAllSources();
+                updateSummary();
+                totalBudgetInput.focus();
+            }
+
+            // ==================== Глобальные обработчики ====================
+
+            function onBudgetChange() {
+                const rawValue = getInputNumeric(totalBudgetInput);
+                state.budget = (rawValue !== null && rawValue >= 0) ? Math.round(rawValue) : 0;
+                if (rawValue === null) {
+                    totalBudgetInput.value = '0';
+                    state.budget = 0;
+                }
+                recalculateAllSources();
+                syncAllSourceRows();
+                updateSummary();
+                updateDeleteButtons();
+            }
+
+            function onPersonalPercentChange() {
+                const rawValue = getInputNumeric(personalPercentInput);
+                let val = (rawValue !== null) ? rawValue : 0;
+                val = Math.min(100, Math.max(0, val));
+                state.personalPercent = val;
+                if (rawValue === null && personalPercentInput.value.trim() === '') {
+                    personalPercentInput.value = '0';
+                    state.personalPercent = 0;
+                }
+                recalculateAllSources();
+                syncAllSourceRows();
+                updateSummary();
+                updateDeleteButtons();
+            }
+
+            function syncAllSourceRows() {
+                const rows = sourcesListEl.querySelectorAll('.source-row[data-index]');
+                rows.forEach((row) => {
+                    const index = parseInt(row.dataset.index);
+                    if (!isNaN(index) && state.sources[index]) {
+                        syncSourceRowDOM(index);
+                    }
+                });
+            }
+
+            totalBudgetInput.addEventListener('input', onBudgetChange);
+            totalBudgetInput.addEventListener('blur', function() {
+                if (this.value.trim() === '' || getInputNumeric(this) === null) {
+                    this.value = '0';
+                    state.budget = 0;
+                    recalculateAllSources();
+                    syncAllSourceRows();
+                    updateSummary();
+                    updateDeleteButtons();
+                } else {
+                    const val = Math.round(getInputNumeric(this) || 0);
+                    this.value = String(Math.max(0, val));
+                }
+            });
+            totalBudgetInput.addEventListener('focus', function() {
+                if (this.value === '0') this.value = '';
+            });
+
+            personalPercentInput.addEventListener('input', onPersonalPercentChange);
+            personalPercentInput.addEventListener('blur', function() {
+                const rawValue = getInputNumeric(this);
+                if (rawValue === null || this.value.trim() === '') {
+                    this.value = '0';
+                    state.personalPercent = 0;
+                    recalculateAllSources();
+                    syncAllSourceRows();
+                    updateSummary();
+                    updateDeleteButtons();
+                } else {
+                    const val = Math.min(100, Math.max(0, rawValue));
+                    this.value = val.toFixed(1);
+                }
+            });
+            personalPercentInput.addEventListener('focus', function() {
+                if (this.value === '0' || this.value === '0.0') this.value = '';
+            });
+
+            btnAddSource.addEventListener('click', function() {
+                addSource(true);
+            });
+
+            btnReset.addEventListener('click', function() {
+                resetAll();
+            });
+
+            sourcesListEl.addEventListener('click', function(e) {
+                const deleteBtn = e.target.closest('.btn-delete');
+                if (!deleteBtn) return;
+                if (deleteBtn.disabled) return;
+                const row = deleteBtn.closest('.source-row');
+                if (!row) return;
+                const index = parseInt(row.dataset.index);
+                if (!isNaN(index)) {
+                    removeSource(index);
+                }
+            });
+
+            // ==================== Инициализация ====================
+            function initialize() {
+                state.sources = [{
+                    id: state.nextId++,
+                    name: '',
+                    percent: 0,
+                    withoutDeduction: 0,
+                    withDeduction: 0,
+                    priority: 'percent',
+                }];
+                state.budget = 0;
+                state.personalPercent = 0;
+                totalBudgetInput.value = '0';
+                personalPercentInput.value = '0';
+                renderAllSources();
+                updateSummary();
+            }
+
+            initialize();
+
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    addSource(true);
+                }
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
+                    e.preventDefault();
+                    resetAll();
+                }
+            });
+
+            console.log('✅ Калькулятор распределения бюджета готов к работе.');
+            console.log('   Подсказка: Ctrl+Enter — добавить источник, Ctrl+Shift+R — сбросить всё.');
+        })();
+    </script>
+</body>
+</html>
